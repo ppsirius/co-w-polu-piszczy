@@ -1,26 +1,104 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/*
+  Carbon Health design tokens (DESIGN.sh) exposed as Tailwind v4 theme.
+  Each `--color-*` generates utilities (bg-*, text-*, border-*); scale/radius/shadow/motion
+  are surfaced as component utilities via @theme inline below.
+*/
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Canvas & surface */
+  --color-canvas: #ffffff;
+  --color-surface-1: #f9fafb;
+  --color-surface-2: #f3f4f6;
+
+  /* Ink (text scale) */
+  --color-ink: #111827;
+  --color-ink-muted: #6b7280;
+  --color-ink-subtle: #9ca3af;
+
+  /* Brand (Carbon Teal) */
+  --color-primary: #0a9e8f;
+  --color-primary-hover: #088a7d;
+  --color-primary-light: #e6f6f5;
+  --color-on-primary: #ffffff;
+
+  /* Borders */
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
+
+  /* Status palette - foreground + background tint (paired, never large fills) */
+  --color-urgent: #dc2626;
+  --color-urgent-bg: #fef2f2;
+  --color-warning: #d97706;
+  --color-warning-bg: #fffbeb;
+  --color-normal: #059669;
+  --color-normal-bg: #ecfdf5;
+  --color-follow-up: #7c3aed;
+  --color-follow-up-bg: #f5f3ff;
+  --color-info: #0284c7;
+  --color-info-bg: #f0f9ff;
+
+  /* Typography */
+  --font-sans: var(--font-inter), -apple-system, blinkmacsystemfont, "Segoe UI", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", Menlo, monospace;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-overlay: 0 20px 60px rgba(0, 0, 0, 0.12);
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/*
+  Focus indicator: 2px solid teal, 2px offset (DESIGN.sh Accessibility).
+  Never remove outline; use this ring for keyboard focus visibility.
+*/
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Numeric / machine data: monospaced, tabular figures for alignment. */
+.font-mono,
+.tnum {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+}
+
+/* Reduced motion: collapse transitions to instant (DESIGN.sh Accessibility). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
