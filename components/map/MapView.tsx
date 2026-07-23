@@ -23,6 +23,7 @@ export function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const layer = useUIStore((s) => s.layer);
+  const selectedDate = useUIStore((s) => s.selectedDate);
   const selectedFieldId = useUIStore((s) => s.selectedFieldId);
   const fields = useFields();
 
@@ -52,32 +53,16 @@ export function MapView() {
       // --- Fields (polygons colored by active layer) ---
       map.addSource("fields", {
         type: "geojson",
-        data: fieldFeatures(layer, fields),
+        data: fieldFeatures(layer, fields, selectedDate),
       });
       map.addLayer({
         id: "fields-fill",
         type: "fill",
         source: "fields",
+        // Color is precomputed per field in geojson.ts (one ramp per layer),
+        // so the same expression works for every layer without recalibration.
         paint: {
-          "fill-color": [
-            "case",
-            ["==", ["get", "layerValue"], null],
-            "#9CA3AF",
-            // Only NDVI uses the ramp today; other layers fall back to teal.
-            [
-              "step",
-              ["get", "layerValue"],
-              "#92400E",
-              0.2,
-              "#CA8A04",
-              0.4,
-              "#A3A320",
-              0.6,
-              "#4D7C0F",
-              0.75,
-              "#059669",
-            ],
-          ],
+          "fill-color": ["get", "color"],
           "fill-opacity": 0.45,
         },
       });
@@ -146,8 +131,8 @@ export function MapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Re-derive field data when the active layer OR the fields list changes
-  // (e.g. a field added/edited/deleted on field-management).
+  // Re-derive field data when the active layer, the selected date, OR the
+  // fields list changes (e.g. a field added/edited/deleted on field-management).
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -155,11 +140,11 @@ export function MapView() {
       const source = map.getSource("fields") as
         | mapboxgl.GeoJSONSource
         | undefined;
-      source?.setData(fieldFeatures(layer, fields));
+      source?.setData(fieldFeatures(layer, fields, selectedDate));
     };
     if (map.loaded()) update();
     else map.once("load", update);
-  }, [layer, fields]);
+  }, [layer, selectedDate, fields]);
 
   // Highlight the selected field and fly to it when the dashboard card click
   // (or any other selection) changes selectedFieldId.
