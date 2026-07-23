@@ -102,14 +102,16 @@ app/
   (dashboard)/          — route group, wraps in DashboardShell
     page.tsx            — / (dashboard home, FieldGrid)
     map/page.tsx        — /map (Mapbox + toolbar + device panel)
+    weather/page.tsx    — /weather (per-field forecast: 48h hourly + 7-day)
     sensor/[id]/page.tsx — /sensor/:id (image browser + notes)
     sensors/            — /sensors (all sensors card grid + CRUD + per-card debug)
     crop-rotation/      — /crop-rotation
     ai-assessment/      — /ai-assessment (heuristic AI)
     field-management/   — /field-management (CRUD)
     members/            — /members
-  api/fields/[id]/metrics/route.ts — BFF endpoint (per-field metrics)
-  api/map/layers/route.ts         — BFF endpoint (all fields × all layers)
+  api/fields/[id]/metrics/route.ts   — BFF endpoint (per-field metrics)
+  api/fields/[id]/forecast/route.ts  — BFF endpoint (per-field 48h + 7-day forecast)
+  api/map/layers/route.ts            — BFF endpoint (all fields × all layers)
   api/tiles/ndvi/[z]/[x]/[y]/route.ts — Sentinel-2 NDVI tile proxy (token-injecting)
 
 components/
@@ -117,6 +119,7 @@ components/
   ui/      — Card, StatusPill, MetricTile, Button, Skeleton, Modal, TextInput, SelectInput
   fields/  — FieldCard, FieldGrid, FieldEditorModal, FieldDrawMap
   map/     — MapView, DevicePanel, DateSelector, LayerFilter, LayerLegend
+  weather/ — WeatherView, HourlyForecastCard, DailyForecastCard, WeatherIcon
   sensor/  — ImageBrowser, TimelineSlider, NotesPanel
   sensors/ — SensorsView, SensorCard, SensorEditorModal
 
@@ -129,6 +132,7 @@ lib/
   metrics.ts       — per-field BFF aggregation logic
   map-values.ts    — map BFF aggregation logic (server-only)
   gdd.ts           — growing-degree-days computation (shared)
+  weather-codes.ts — WMO weather code -> Polish label + status (client-safe)
   geojson.ts       — GeoJSON builders + per-layer color ramps + pickLayerValues (client-safe)
   layer-meta.ts    — per-layer legend metadata (ranges, units, source)
   geometry.ts      — spherical polygon area/centroid (no turf)

@@ -1,7 +1,7 @@
-import { weatherDays } from "@/lib/mock/data";
+import { dailyForecast, hourlyForecast, weatherDays } from "@/lib/mock/data";
 import type { IWeatherProvider } from "@/lib/providers/types";
 
-/** Mock weather provider: serves the in-memory daily weather dataset. */
+/** Mock weather provider: serves the in-memory weather datasets. */
 export class MockWeatherProvider implements IWeatherProvider {
   async getWeatherSeries(fieldId: string) {
     return weatherDays
@@ -15,5 +15,13 @@ export class MockWeatherProvider implements IWeatherProvider {
   ) {
     const series = await this.getWeatherSeries(fieldId);
     return [...series].reverse().find((w) => w.date <= asOf);
+  }
+
+  async getHourlyForecast(fieldId: string) {
+    return hourlyForecast(fieldId);
+  }
+
+  async getDailyForecast(fieldId: string) {
+    return dailyForecast(fieldId);
   }
 }

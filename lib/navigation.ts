@@ -6,6 +6,7 @@ import {
   Sparkle,
   SquaresFour,
   Users,
+  CloudSun,
 } from "@phosphor-icons/react";
 
 /** A Phosphor icon is a forward-ref component accepting IconProps. */
@@ -28,6 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Panel główny", icon: ChartLineUp },
   { href: "/sensors", label: "Czujniki", icon: CellTower },
   { href: "/map", label: "Mapa", icon: MapTrifold },
+  { href: "/weather", label: "Pogoda", icon: CloudSun },
   { href: "/crop-rotation", label: "Płodozmian", icon: ArrowsClockwise },
   { href: "/ai-assessment", label: "Ocena pól AI", icon: Sparkle },
   { href: "/field-management", label: "Zarządzanie polami", icon: SquaresFour },

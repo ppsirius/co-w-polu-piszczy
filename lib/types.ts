@@ -113,6 +113,61 @@ export type WeatherDay = {
   humidityPct: number;
 };
 
+/**
+ * WMO weather interpretation code (Open-Meteo's `weather_code`). Source-agnostic:
+ * it is the canonical numeric code for sky/precip conditions, mapped to a Polish
+ * label + status in lib/weather-codes.ts.
+ */
+export type WeatherCode = number;
+
+/**
+ * One hour of FORWARD-LOOKING forecast (next 48h) for a field's centroid.
+ * Distinct from the historical WeatherDay: this is what the weather page renders.
+ * `time` is a local ISO hour stamp ("2026-07-23T13") in the field's timezone.
+ */
+export type WeatherHour = {
+  fieldId: string;
+  time: string;
+  /** Air temperature at 2m, °C. */
+  tempC: number;
+  /** Probability of precipitation (≥0.1mm), 0-100. */
+  precipProbPct: number;
+  /** Amount of precipitation, mm. */
+  precipMm: number;
+  /** WMO weather interpretation code (see lib/weather-codes.ts). */
+  weatherCode: WeatherCode;
+};
+
+/**
+ * One day of FORWARD-LOOKING forecast (next 7d) for a field's centroid.
+ * Distinct from the historical WeatherDay: no GDD/dew (those are derived from
+ * past accumulation); this carries the forecast essentials the weather page shows.
+ */
+export type WeatherDayForecast = {
+  fieldId: string;
+  date: IsoDate;
+  tempMaxC: number;
+  tempMinC: number;
+  tempAvgC: number;
+  /** Max probability of precipitation across the day, 0-100. */
+  precipProbPct: number;
+  /** Total precipitation across the day, mm. */
+  precipMm: number;
+  /** Dominant WMO weather interpretation code for the day. */
+  weatherCode: WeatherCode;
+  /** Max wind speed at 10m, km/h. */
+  windMaxKmh: number;
+  /** Mean relative humidity, %. */
+  humidityPct: number;
+};
+
+/** Aggregated forecast payload returned by the /api/fields/[id]/forecast BFF. */
+export type FieldForecast = {
+  fieldId: string;
+  hourly: WeatherHour[];
+  daily: WeatherDayForecast[];
+};
+
 /** Soil moisture + temperature reading from a ground sensor. */
 export type SensorReading = {
   sensorId: string;

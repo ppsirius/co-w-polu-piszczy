@@ -9,7 +9,15 @@
  * All methods are async (real providers hit the network) and take an explicit
  * date/field id so they're cacheable and parallelizable.
  */
-import type { IsoDate, NdviSample, SensorImage, SensorReading, WeatherDay } from "@/lib/types";
+import type {
+  IsoDate,
+  NdviSample,
+  SensorImage,
+  SensorReading,
+  WeatherDay,
+  WeatherDayForecast,
+  WeatherHour,
+} from "@/lib/types";
 
 export interface ISatelliteProvider {
   /** NDVI time series for a field, oldest-first. */
@@ -38,6 +46,10 @@ export interface IWeatherProvider {
     fieldId: string,
     asOf: IsoDate,
   ): Promise<WeatherDay | undefined>;
+  /** Forward-looking hourly forecast (next ~48h), oldest-first. */
+  getHourlyForecast(fieldId: string): Promise<WeatherHour[]>;
+  /** Forward-looking daily forecast (next ~7d), oldest-first. */
+  getDailyForecast(fieldId: string): Promise<WeatherDayForecast[]>;
 }
 
 export interface ISensorProvider {

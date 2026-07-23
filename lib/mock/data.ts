@@ -16,6 +16,8 @@ import type {
   SensorImage,
   SensorReading,
   WeatherDay,
+  WeatherDayForecast,
+  WeatherHour,
 } from "@/lib/types";
 
 /** Reference "today" - pinned so the mock dataset is stable across runs. */
@@ -269,6 +271,104 @@ export const weatherDays: WeatherDay[] = fields.flatMap((field) => {
     };
   });
 });
+
+// --- Forecast (forward-looking: 48h hourly + 7d daily) ----------------------
+//
+// Distinct from the historical weatherDays above: this drives the /pogoda page.
+// Deterministic and anchored to TODAY so the forecast is stable across runs,
+// just like the rest of the mock dataset. WMO weather_code values mirror the
+// real Open-Meteo codes (see lib/weather-codes.ts).
+
+const HOUR_MS = 3_600_000;
+
+/** Add N hours to an ISO date, returning a local hour stamp "YYYY-MM-DDTHH". */
+function addHoursIso(date: IsoDate, hours: number): string {
+  // Build from the date at local midnight (no Z) so the stamp stays field-local.
+  return new Date(Date.parse(`${date}T00:00:00`) + hours * HOUR_MS)
+    .toISOString()
+    .slice(0, 13);
+}
+
+/** Pick a deterministic WMO code biased by a rain seed: dry / partly cloudy / rain. */
+function pickMockWeatherCode(seed: number): number {
+  if (seed > 0.82) return 95; // burza (thunderstorm)
+  if (seed > 0.6) return 61; // deszcz (slight rain)
+  if (seed > 0.42) return 3; // zachmurzenie (overcast)
+  if (seed > 0.2) return 2; // częściowe zachmurzenie
+  return 0; // bezchmurnie (clear)
+}
+
+/**
+ * Deterministic 48-hour forecast for a field. Temperature follows a diurnal
+ * curve (min ~05:00, max ~15:00) around the field's seasonal baseline; rain
+ * probability and amount vary per hour from a seed.
+ */
+export function hourlyForecast(fieldId: string): WeatherHour[] {
+  const field = fields.find((f) => f.id === fieldId);
+  if (!field) return [];
+  const baseline =
+    field.crop.crop === "pszenica_ozima"
+      ? 21
+      : field.crop.crop === "rzepak"
+        ? 20
+        : 19;
+  const out: WeatherHour[] = [];
+  for (let h = 0; h < 48; h++) {
+    const stamp = addHoursIso(TODAY, h);
+    const hour = Number(stamp.slice(11, 13));
+    // Cosine diurnal curve: peak ~15:00, trough ~05:00, amplitude 6°C.
+    const diurnal = Math.cos(((hour - 15) / 24) * 2 * Math.PI) * -6;
+    const seed = seeded(`${fieldId}-hfx-${stamp}`);
+    const drift = (seed - 0.5) * 3;
+    const tempC = round(baseline + diurnal + drift, 1);
+    const precipProbPct = Math.round(clamp(seed * 130 - 30, 0, 95));
+    const precipMm =
+      precipProbPct > 40 ? round(clamp(seed * 4, 0, 6), 1) : 0;
+    out.push({
+      fieldId,
+      time: stamp,
+      tempC,
+      precipProbPct,
+      precipMm,
+      weatherCode: pickMockWeatherCode(seed),
+    });
+  }
+  return out;
+}
+
+/** Deterministic 7-day forecast for a field. */
+export function dailyForecast(fieldId: string): WeatherDayForecast[] {
+  const field = fields.find((f) => f.id === fieldId);
+  if (!field) return [];
+  const baseline =
+    field.crop.crop === "pszenica_ozima"
+      ? 22
+      : field.crop.crop === "rzepak"
+        ? 21
+        : 20;
+  const dates = dateRange(addDays(TODAY, 6), 7, 1);
+  return dates.map((date) => {
+    const seed = seeded(`${fieldId}-dfx-${date}`);
+    const tempMaxC = round(baseline + seed * 7, 1); // 20-29
+    const tempMinC = round(baseline - 6 + seed * 4, 1); // ~13-18
+    const tempAvgC = round((tempMaxC + tempMinC) / 2, 1);
+    const precipProbPct = Math.round(clamp(seed * 120 - 20, 0, 90));
+    const precipMm =
+      precipProbPct > 35 ? round(clamp(seed * 8, 0, 12), 1) : 0;
+    return {
+      fieldId,
+      date,
+      tempMaxC,
+      tempMinC,
+      tempAvgC,
+      precipProbPct,
+      precipMm,
+      weatherCode: pickMockWeatherCode(seed),
+      windMaxKmh: Math.round(8 + seed * 22), // 8-30
+      humidityPct: Math.round(50 + seed * 40), // 50-90
+    };
+  });
+}
 
 // --- Soil sensor readings (hourly-ish aggregated to daily) ------------------
 
