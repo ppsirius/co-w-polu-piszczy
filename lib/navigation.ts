@@ -1,11 +1,10 @@
 import {
   ChartLineUp,
-  Drop,
+  CellTower,
   MapTrifold,
   ArrowsClockwise,
   Sparkle,
   SquaresFour,
-  GearFine,
   Users,
 } from "@phosphor-icons/react";
 
@@ -27,11 +26,10 @@ export type NavItem = {
  */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Panel główny", icon: ChartLineUp },
-  { href: "/soil-sensor", label: "Czujnik glebowy", icon: Drop },
+  { href: "/sensors", label: "Czujniki", icon: CellTower },
   { href: "/map", label: "Mapa", icon: MapTrifold },
   { href: "/crop-rotation", label: "Płodozmian", icon: ArrowsClockwise },
   { href: "/ai-assessment", label: "Ocena pól AI", icon: Sparkle },
   { href: "/field-management", label: "Zarządzanie polami", icon: SquaresFour },
-  { href: "/sensor-settings", label: "Ustawienia czujników", icon: GearFine },
   { href: "/members", label: "Członkowie", icon: Users },
 ];

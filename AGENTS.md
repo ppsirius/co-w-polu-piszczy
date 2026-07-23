@@ -29,7 +29,7 @@ Full spec in [`DESIGN.md`](./DESIGN.md). Key tokens:
 | Framework | Next.js 16.2.11 (App Router, Turbopack) |
 | React | 19.2.4 |
 | Styling | Tailwind CSS v4 (`@tailwindcss/postcss`) |
-| State | Zustand 5 (two stores: UI state + field CRUD) |
+| State | Zustand 5 (three stores: UI state + field CRUD + sensor CRUD) |
 | Animation | Motion 12 (`motion/react`) |
 | Icons | @phosphor-icons/react (duotone weight) |
 | Maps | Mapbox GL JS + Mapbox GL Draw |
@@ -56,6 +56,7 @@ lib/providers/registry.ts  — single switch point (dependency injection)
 
 - **`lib/store.ts`** — global UI state (selected field, date, map layer, selected sensor). No persistence.
 - **`lib/fields-store.ts`** — field CRUD with `zustand/persist` (localStorage). Uses `skipHydration` + manual `rehydrate()` to avoid SSR/client mismatch.
+- **`lib/sensors-store.ts`** — sensor CRUD with `zustand/persist` (localStorage), same `skipHydration` + `rehydrate()` pattern. Backs the `/sensors` grid.
 
 ### Server vs Client Components
 
@@ -82,11 +83,10 @@ app/
     page.tsx            — / (dashboard home, FieldGrid)
     map/page.tsx        — /map (Mapbox + toolbar + device panel)
     sensor/[id]/page.tsx — /sensor/:id (image browser + notes)
-    soil-sensor/        — /soil-sensor
+    sensors/            — /sensors (all sensors card grid + CRUD + per-card debug)
     crop-rotation/      — /crop-rotation
     ai-assessment/      — /ai-assessment (heuristic AI)
     field-management/   — /field-management (CRUD)
-    sensor-settings/    — /sensor-settings
     members/            — /members
   api/fields/[id]/metrics/route.ts — BFF endpoint
 
@@ -96,12 +96,13 @@ components/
   fields/  — FieldCard, FieldGrid, FieldEditorModal, FieldDrawMap
   map/     — MapView, DevicePanel, DateSelector, LayerFilter
   sensor/  — ImageBrowser, TimelineSlider, NotesPanel
-  soil/    — SoilReadingsTable
+  sensors/ — SensorsView, SensorCard, SensorEditorModal
 
 lib/
   types.ts         — domain model types
   store.ts         — global UI Zustand store
   fields-store.ts  — field CRUD Zustand store (persisted)
+  sensors-store.ts — sensor CRUD Zustand store (persisted)
   labels.ts        — Polish enum labels
   metrics.ts       — BFF aggregation logic
   geojson.ts       — GeoJSON builders + NDVI color ramp
@@ -116,6 +117,8 @@ lib/
 ## Common Tasks
 
 **Add a new module/page:** create `app/(dashboard)/your-page/page.tsx`, add entry to `lib/navigation.ts` with Phosphor icon, import in `Sidebar.tsx`.
+
+**Add/edit/delete persisted domain entities:** each editable domain has a persisted Zustand store (`lib/fields-store.ts`, `lib/sensors-store.ts`) using the `skipHydration` + client `rehydrate()` pattern to stay SSR-safe. Render the static seed until `hydrated` flips true, then swap to the store list. Editor modals (`FieldEditorModal`, `SensorEditorModal`) remount their form per target via `key` so state never needs syncing from props.
 
 **Swap a provider to live API:** implement the interface in `lib/providers/types.ts`, register in `lib/providers/registry.ts`. No UI changes needed.
 
