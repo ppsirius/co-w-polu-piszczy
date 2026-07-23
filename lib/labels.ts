@@ -41,7 +41,7 @@ export const layerLabel: Record<MapLayer, string> = {
   temperature: "Temperatura",
   gdd: "GDD",
   moisture: "Wilgotność",
-  dew: "Punkt rosy",
+  dew: "Zwilżenie liści",
 };
 
 /** Polish labels for field status, mirroring the StatusPill component. */

@@ -1,5 +1,5 @@
 import { sensors } from "@/lib/mock/data";
-import type { Field, MapLayer } from "@/lib/types";
+import type { Field, IsoDate, MapLayer } from "@/lib/types";
 
 /**
  * Build GeoJSON for the map. Fields -> polygons, sensors -> points.
@@ -53,12 +53,13 @@ export type LayerValues = Record<string, number | null>;
 
 /**
  * Full BFF response: field id -> (layer -> value), one entry per field with all
- * five layers. Kept here (pure types only) so the client can type the fetch
- * WITHOUT importing the server-only map-values.ts module.
+ * five layers PLUS the NDVI acquisition date. Kept here (pure types only) so
+ * the client can type the fetch WITHOUT importing the server-only map-values.ts
+ * module.
  */
 export type MapLayerValuesResponse = Record<
   string,
-  Record<MapLayer, number | null>
+  Record<MapLayer, number | null> & { ndviAcquiredAt?: IsoDate | null }
 >;
 
 /**
@@ -75,6 +76,23 @@ export function pickLayerValues(
     out[fieldId] = lv[layer] ?? null;
   }
   return out;
+}
+
+/**
+ * The NDVI acquisition date to surface in the legend. Sentinel-2 only revisits
+ * every ~5 days, so the per-field reading may come from a different pass per
+ * field (each finds its own nearest cloud-free day). We show the MOST RECENT
+ * pass across all fields - that's the freshest imagery the user is looking at
+ * and the honest upper bound for "how stale is this view". Returns null when no
+ * field has NDVI data (mock without raster, all-cloudy window).
+ */
+export function pickNdviAcquiredAt(all: MapLayerValuesResponse): IsoDate | null {
+  let latest: IsoDate | null = null;
+  for (const lv of Object.values(all)) {
+    const d = lv.ndviAcquiredAt;
+    if (d && (!latest || d > latest)) latest = d;
+  }
+  return latest;
 }
 
 export function fieldFeatures(

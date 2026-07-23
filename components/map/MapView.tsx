@@ -9,6 +9,7 @@ import {
   type MapLayerValuesResponse,
   fieldFeatures,
   pickLayerValues,
+  pickNdviAcquiredAt,
   sensorFeatures,
 } from "@/lib/geojson";
 import { useUIStore } from "@/lib/store";
@@ -47,6 +48,7 @@ export function MapView() {
   const layer = useUIStore((s) => s.layer);
   const selectedDate = useUIStore((s) => s.selectedDate);
   const selectedFieldId = useUIStore((s) => s.selectedFieldId);
+  const setNdviAcquiredAt = useUIStore((s) => s.setNdviAcquiredAt);
   const fields = useFields();
   // Full per-field, per-layer payload from the BFF. Ref so the layer-recompute
   // effect can read it without itself being a dependency.
@@ -171,6 +173,9 @@ export function MapView() {
         if (!active) return;
         valuesRef.current = all;
         setValuesVersion((v) => v + 1);
+        // Publish the real NDVI acquisition date so the legend can show how
+        // far off the displayed value is from the selected date.
+        setNdviAcquiredAt(pickNdviAcquiredAt(all));
       })
       .catch(() => {
         // Leave the previous values in place; polygons show the no-data tint.
@@ -178,7 +183,7 @@ export function MapView() {
     return () => {
       active = false;
     };
-  }, [selectedDate]);
+  }, [selectedDate, setNdviAcquiredAt]);
 
   // Single source of truth for the active layer mode. Three mutually exclusive
   // modes, each idempotent (guards every add/remove with an existence check) so

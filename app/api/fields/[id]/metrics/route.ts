@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getFieldMetrics } from "@/lib/metrics";
-import { getField, TODAY } from "@/lib/mock/data";
+import { getField } from "@/lib/mock/data";
+import { todayIso } from "@/lib/utils/today";
 
 /**
  * BFF aggregation endpoint (brief §1).
@@ -9,7 +10,7 @@ import { getField, TODAY } from "@/lib/mock/data";
  *
  * Folds NDVI (satellite) + soil moisture (sensors) + weather (GDD, temp, dew)
  * into a single FieldMetrics JSON, so the panel hits one endpoint instead of
- * five. Date defaults to the latest mock date; out-of-range dates clamp.
+ * five. Date defaults to today; out-of-range dates clamp.
  *
  * This route is the single client-facing contract. Swap providers behind it and
  * the response shape never changes.
@@ -30,8 +31,10 @@ export async function GET(
 
   const url = new URL(_request.url);
   const requestedDate = url.searchParams.get("date");
-  // Clamp to the mock dataset range so clients can't ask for future dates.
-  const date = requestedDate ? clampDate(requestedDate) : TODAY;
+  const today = todayIso();
+  // Default to real today; clamp future dates and anything before the dataset
+  // lower bound so clients can't ask for dates that make no sense.
+  const date = requestedDate ? clampDate(requestedDate, today) : today;
 
   const metrics = await getFieldMetrics(id, date);
   if (!metrics) {
@@ -45,8 +48,8 @@ export async function GET(
   return NextResponse.json({ ...metrics, resolvedDate: date });
 }
 
-function clampDate(iso: string): string {
+function clampDate(iso: string, today: string): string {
   if (iso <= "2026-05-01") return "2026-05-01";
-  if (iso >= TODAY) return TODAY;
+  if (iso >= today) return today;
   return iso;
 }

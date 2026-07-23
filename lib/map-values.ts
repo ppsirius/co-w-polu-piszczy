@@ -23,7 +23,19 @@ import type { IsoDate, MapLayer } from "@/lib/types";
  * fetch and project them with the pure `pickLayerValues` helper in geojson.ts.
  */
 
-export type FieldLayerValues = Record<MapLayer, number | null>;
+/**
+ * Per-field values: the 6 layer scalars PLUS the NDVI acquisition date.
+ *
+ * The acquisition date is reported separately from the selected date because
+ * Sentinel-2 only revisits every ~5 days: the value shown for "selected date D"
+ * is actually from the nearest cloud-free pass, which can be up to
+ * +/- STATS_WINDOW_DAYS away. The legend surfaces this gap so the user doesn't
+ * mistake a stale-ish reading for today's data. `null` when there's no NDVI
+ * (mock with no raster) or the provider is offline.
+ */
+export type FieldLayerValues = Record<MapLayer, number | null> & {
+  ndviAcquiredAt?: IsoDate | null;
+};
 
 /**
  * @param date ISO date the map is showing. Values are resolved at-or-before
@@ -53,6 +65,9 @@ async function valuesForField(
   return {
     none: null, // plain basemap layer has no per-field value
     ndvi: ndvi?.value ?? null,
+    // Real acquisition date from the NDVI sample (mock: exact sample date;
+    // live: nearest cloud-free Sentinel-2 pass in the +/-16d window).
+    ndviAcquiredAt: ndvi?.date ?? null,
     temperature: weather?.tempAvgC ?? null,
     gdd: weather?.gddCumulative ?? null,
     dew: weather?.dewHours ?? null,

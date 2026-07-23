@@ -116,9 +116,13 @@ export class Sentinel2SatelliteProvider implements ISatelliteProvider {
   ): Promise<NdviSample | undefined> {
     const field = getField(fieldId);
     if (!field) return undefined;
-    const mean = await this.fetchZonalMean(field.polygon, asOf);
-    if (mean === null) return undefined;
-    return { fieldId, date: asOf, value: mean };
+    const zonal = await this.fetchZonalMean(field.polygon, asOf);
+    if (!zonal) return undefined;
+    // Stamp the sample with the REAL acquisition date (the nearest pass the
+    // statistics endpoint actually returned imagery for), NOT the requested
+    // `asOf`. The legend surfaces this so the user knows the number may be
+    // from up to +/- STATS_WINDOW_DAYS off the selected date.
+    return { fieldId, date: zonal.acquiredAt, value: zonal.mean };
   }
 
   async getNdviSeries(_fieldId: string): Promise<NdviSample[]> {
@@ -167,7 +171,7 @@ export class Sentinel2SatelliteProvider implements ISatelliteProvider {
   private async fetchZonalMean(
     polygon: GeoJSON.Polygon,
     date: IsoDate,
-  ): Promise<number | null> {
+  ): Promise<{ mean: number; acquiredAt: IsoDate } | null> {
     const token = await getSentinelToken();
     // Zonal stats search a WIDER window than tiles: recent Sentinel-2 L2A can
     // lag days-to-weeks before CDSE indexes it, so the requested date may have
@@ -222,7 +226,11 @@ export class Sentinel2SatelliteProvider implements ISatelliteProvider {
       return curDist < bestDist ? cur : best;
     });
     const mean = nearest.outputs?.ndvi?.bands?.B0?.stats?.mean;
-    return typeof mean === "number" ? Math.round(mean * 1000) / 1000 : null;
+    if (typeof mean !== "number") return null;
+    // Strip the time component: CDSE interval.from is an ISO timestamp, we
+    // only ever render/compare the calendar day.
+    const acquiredAt = nearest.interval.from.slice(0, 10) as IsoDate;
+    return { mean: Math.round(mean * 1000) / 1000, acquiredAt };
   }
 }
 

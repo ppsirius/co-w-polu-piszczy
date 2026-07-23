@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMapLayerValues } from "@/lib/map-values";
 import type { MapLayerValuesResponse } from "@/lib/geojson";
-import { TODAY } from "@/lib/mock/data";
+import { todayIso } from "@/lib/utils/today";
 
 /**
  * Map layer values endpoint - the map page's single data contract.
@@ -20,10 +20,11 @@ import { TODAY } from "@/lib/mock/data";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const requestedDate = url.searchParams.get("date");
+  const today = todayIso();
 
-  // Clamp to the dataset range. TODAY is the mock "now"; a live provider will
-  // resolve real dates but clamping keeps the dashboard date slider sensible.
-  const date = requestedDate && requestedDate <= TODAY ? requestedDate : TODAY;
+  // Default to the real today (not the frozen mock), and clamp future dates to
+  // today so live providers aren't asked for acquisitions that can't exist yet.
+  const date = requestedDate && requestedDate <= today ? requestedDate : today;
 
   const values = await getMapLayerValues(date);
 

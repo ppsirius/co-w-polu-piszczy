@@ -3,6 +3,7 @@
 import { useUIStore } from "@/lib/store";
 import { layerLabel } from "@/lib/labels";
 import { layerMeta } from "@/lib/layer-meta";
+import { formatDate } from "@/lib/utils/format-date";
 
 /**
  * Map legend overlay: shows the active layer's color scale + data-source
@@ -12,13 +13,31 @@ import { layerMeta } from "@/lib/layer-meta";
  *
  * For the NDVI raster layer the legend describes the satellite imagery ramp;
  * for zonal layers it mirrors the polygon color helpers in lib/geojson.ts.
+ *
+ * Sentinel-2 only revisits every ~5 days, so the NDVI value can be from a
+ * different day than the selected date. When the real acquisition date differs,
+ * it's surfaced here (amber, "dane z <date>") - but ONLY on the NDVI layer,
+ * since that date is the satellite acquisition and meaningless for the other
+ * layers (Open-Meteo weather, soil sensors). Hidden when there's no acquisition
+ * date (mock, all cloudy) or when it coincides with the selected date.
  */
 export function LayerLegend() {
   const layer = useUIStore((s) => s.layer);
+  const selectedDate = useUIStore((s) => s.selectedDate);
+  const ndviAcquiredAt = useUIStore((s) => s.ndviAcquiredAt);
   const meta = layerMeta[layer];
 
   // No overlay on the plain basemap -> no legend.
   if (layer === "none") return null;
+
+  // Flag the satellite staleness ONLY on the NDVI layer: `ndviAcquiredAt` is the
+  // Sentinel-2 acquisition date, which is meaningless for the other layers (they
+  // pull from Open-Meteo / soil sensors with their own cadences). Showing it on
+  // temperature/moisture would imply the wrong data source.
+  const showAcquiredAt =
+    layer === "ndvi" &&
+    ndviAcquiredAt !== null &&
+    ndviAcquiredAt !== selectedDate;
 
   return (
     <div
@@ -61,6 +80,14 @@ export function LayerLegend() {
         {meta.source}
         {meta.raster ? " · obraz" : ""}
       </div>
+
+      {showAcquiredAt ? (
+        <div className="mt-0.5 flex items-center gap-1 text-[10px] text-warning">
+          {/* No em-dash (DESIGN.md §9.G); hyphen + "z" is the Polish idiom. */}
+          <span className="font-medium">dane z</span>
+          <span className="font-mono">{formatDate(ndviAcquiredAt)}</span>
+        </div>
+      ) : null}
     </div>
   );
 }

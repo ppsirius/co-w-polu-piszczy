@@ -8,8 +8,9 @@ import { StatusPill } from "@/components/ui/StatusPill";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useUIStore } from "@/lib/store";
-import type { Field, FieldMetrics, IsoDate } from "@/lib/types";
+import type { Field, FieldMetrics } from "@/lib/types";
 import { cropLabel } from "@/lib/labels";
+import { formatDate } from "@/lib/utils/format-date";
 
 /**
  * Dashboard field card (brief §2.C). Sensor thumbnail + aggregated metrics:
@@ -131,13 +132,4 @@ function CardSkeleton() {
       ))}
     </div>
   );
-}
-
-function formatDate(iso: IsoDate): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("pl-PL", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
 }
