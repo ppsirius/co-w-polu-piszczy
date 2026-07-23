@@ -1,5 +1,6 @@
 import type {
   CropType,
+  FieldStatus,
   ImageChannel,
   MapLayer,
   SensorKind,
@@ -40,4 +41,13 @@ export const layerLabel: Record<MapLayer, string> = {
   gdd: "GDD",
   moisture: "Wilgotność",
   dew: "Punkt rosy",
+};
+
+/** Polish labels for field status, mirroring the StatusPill component. */
+export const fieldStatusLabel: Record<FieldStatus, string> = {
+  normal: "Norma",
+  warning: "Uwaga",
+  urgent: "Krytyczny",
+  "follow-up": "Do kontroli",
+  info: "Info",
 };

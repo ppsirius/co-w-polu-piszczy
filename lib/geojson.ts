@@ -5,8 +5,8 @@ import {
   sensors,
   weatherDays,
 } from "@/lib/mock/data";
-import { fields } from "@/lib/mock/data";
-import type { MapLayer } from "@/lib/types";
+import { fields as seedFields } from "@/lib/mock/data";
+import type { Field, MapLayer } from "@/lib/types";
 
 /**
  * Build GeoJSON for the map. Fields -> polygons, sensors -> points.
@@ -38,6 +38,7 @@ type SensorFeature = GeoJSON.Feature<
 
 export function fieldFeatures(
   layer: MapLayer,
+  fields: Field[] = seedFields,
 ): GeoJSON.FeatureCollection<GeoJSON.Polygon> {
   return {
     type: "FeatureCollection",

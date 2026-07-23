@@ -4,10 +4,10 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import mapboxgl from "mapbox-gl";
 import { useEffect, useRef } from "react";
 import { MAPBOX_TOKEN, hasMapboxToken } from "@/lib/mapbox";
-import { fieldFeatures, ndviColor, sensorFeatures } from "@/lib/geojson";
+import { fieldFeatures, sensorFeatures } from "@/lib/geojson";
 import { useUIStore } from "@/lib/store";
-import { fields } from "@/lib/mock/data";
-import { cropLabel, sensorKindLabel } from "@/lib/labels";
+import { useFields } from "@/lib/fields-store";
+import { sensorKindLabel } from "@/lib/labels";
 import { Icon } from "@/components/ui/icon";
 import { LinkIcon, MapPin } from "@phosphor-icons/react";
 
@@ -23,6 +23,7 @@ export function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const layer = useUIStore((s) => s.layer);
+  const fields = useFields();
 
   // Initialize the map once.
   useEffect(() => {
@@ -48,7 +49,10 @@ export function MapView() {
 
     map.on("load", () => {
       // --- Fields (polygons colored by active layer) ---
-      map.addSource("fields", { type: "geojson", data: fieldFeatures(layer) });
+      map.addSource("fields", {
+        type: "geojson",
+        data: fieldFeatures(layer, fields),
+      });
       map.addLayer({
         id: "fields-fill",
         type: "fill",
@@ -129,7 +133,8 @@ export function MapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Re-derive field data when the active layer changes.
+  // Re-derive field data when the active layer OR the fields list changes
+  // (e.g. a field added/edited/deleted on field-management).
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -137,11 +142,11 @@ export function MapView() {
       const source = map.getSource("fields") as
         | mapboxgl.GeoJSONSource
         | undefined;
-      source?.setData(fieldFeatures(layer));
+      source?.setData(fieldFeatures(layer, fields));
     };
     if (map.loaded()) update();
     else map.once("load", update);
-  }, [layer]);
+  }, [layer, fields]);
 
   if (!hasMapboxToken()) {
     return <MissingTokenNotice />;
