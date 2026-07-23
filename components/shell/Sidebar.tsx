@@ -21,7 +21,7 @@ export function Sidebar() {
           <Icon icon={Leaf} size={22} />
         </span>
         <div className="flex flex-col leading-tight">
-          <span className="text-sm font-semibold text-ink">Cowpolupiszczy</span>
+          <span className="text-sm font-semibold text-ink">Co w polu piszczy</span>
           <span className="text-xs text-ink-muted">Monitoring pól</span>
         </div>
       </div>

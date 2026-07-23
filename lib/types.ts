@@ -57,6 +57,12 @@ export type Field = {
   polygon: FieldPolygon;
   centroid: LngLat;
   status: FieldStatus;
+  /**
+   * Short free-text note shown under the photo on the field card. Optional so
+   * the type stays backward-compatible with fields created before this field
+   * existed (and with persisted localStorage entries in fields-store).
+   */
+  description?: string;
 };
 
 /** Sensor type deployed in the field. */

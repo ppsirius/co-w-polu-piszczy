@@ -6,8 +6,8 @@
 import { satelliteProvider } from "@/lib/providers/registry";
 import { sensorProvider } from "@/lib/providers/registry";
 import { weatherProvider } from "@/lib/providers/registry";
-import { getSensorsForField } from "@/lib/mock/data";
-import type { FieldMetrics, IsoDate, Trend } from "@/lib/types";
+import { getSensorsForField, ndviSamples } from "@/lib/mock/data";
+import type { FieldMetrics, IsoDate, NdviSample, Trend } from "@/lib/types";
 
 function deriveTrend(current: number, previous: number | undefined): Trend {
   if (previous === undefined) return "flat";
@@ -25,27 +25,38 @@ export async function getFieldMetrics(
     weatherProvider.getWeatherAt(fieldId, asOf),
   ]);
 
-  const latest = [...ndviSeries].reverse().find((s) => s.date <= asOf);
-  if (!latest) return null;
-  const latestIdx = ndviSeries.findIndex((s) => s.date === latest.date);
-  const previous = latestIdx > 0 ? ndviSeries[latestIdx - 1] : undefined;
+  // The live Sentinel-2 provider implements only point queries (getNdviAt +
+  // raster tiles); its getNdviSeries() is a stub that returns []. The
+  // dashboard card needs a series for the trend arrow, so fall back to the
+  // deterministic mock NDVI dataset when the active provider has no series.
+  // This mirrors the documented intent ("dashboard card uses trend from the
+  // mock until implemented") and keeps the card populated with mock-first data,
+  // the same way /sensors always reads mock data via the always-mock
+  // sensorProvider.
+  const series =
+    ndviSeries.length > 0
+      ? ndviSeries
+      : ndviSamples.filter((s) => s.fieldId === fieldId);
 
-  // Average soil moisture across all ground sensors in the field.
-  const groundSensors = getSensorsForField(fieldId).filter((s) => s.kind === "glebowy");
-  let moisturePct = 0;
-  if (groundSensors.length > 0) {
-    const readings = await Promise.all(
-      groundSensors.map((s) => sensorProvider.getReadings(s.id)),
-    );
-    const latestReadings = readings
-      .map((r) => [...r].reverse().find((x) => x.date <= asOf))
-      .filter((r): r is NonNullable<typeof r> => Boolean(r));
-    if (latestReadings.length > 0) {
-      moisturePct =
-        latestReadings.reduce((sum, r) => sum + r.soilMoisturePct, 0) /
-        latestReadings.length;
-    }
+  const latest = [...series].reverse().find((s) => s.date <= asOf);
+  // No NDVI at all (neither live nor mock) - still return the weather + soil
+  // part of the payload instead of nuking everything. A null NDVI signals
+  // "no satellite reading yet" without hiding the other metrics.
+  if (!latest) {
+    return {
+      fieldId,
+      asOf,
+      ndvi: { current: 0, trend: "flat" },
+      weather: {
+        tempAvgC: weatherDay?.tempAvgC ?? 0,
+        gddCumulative: weatherDay?.gddCumulative ?? 0,
+        dewHours: weatherDay?.dewHours ?? 0,
+      },
+      soil: { moisturePct: await averageSoilMoisture(fieldId, asOf) },
+    };
   }
+  const latestIdx = series.findIndex((s) => s.date === latest.date);
+  const previous = latestIdx > 0 ? series[latestIdx - 1] : undefined;
 
   return {
     fieldId,
@@ -59,8 +70,32 @@ export async function getFieldMetrics(
       gddCumulative: weatherDay?.gddCumulative ?? 0,
       dewHours: weatherDay?.dewHours ?? 0,
     },
-    soil: {
-      moisturePct: Math.round(moisturePct),
-    },
+    soil: { moisturePct: await averageSoilMoisture(fieldId, asOf) },
   };
+}
+
+/**
+ * Mean soil moisture across all ground probes in a field at or before `asOf`.
+ * sensorProvider is always the mock today (no live IoT provider exists), so this
+ * reads the mock dataset - same source the /sensors grid uses per-card.
+ */
+async function averageSoilMoisture(
+  fieldId: string,
+  asOf: IsoDate,
+): Promise<number> {
+  const groundSensors = getSensorsForField(fieldId).filter(
+    (s) => s.kind === "glebowy",
+  );
+  if (groundSensors.length === 0) return 0;
+  const readings = await Promise.all(
+    groundSensors.map((s) => sensorProvider.getReadings(s.id)),
+  );
+  const latestReadings = readings
+    .map((r) => [...r].reverse().find((x) => x.date <= asOf))
+    .filter((r): r is NonNullable<typeof r> => Boolean(r));
+  if (latestReadings.length === 0) return 0;
+  const moisturePct =
+    latestReadings.reduce((sum, r) => sum + r.soilMoisturePct, 0) /
+    latestReadings.length;
+  return Math.round(moisturePct);
 }

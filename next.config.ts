@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
       // Mock imagery placeholders (real data would be Sentinel-2 / sensor tiles).
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "fastly.picsum.photos" },
+      // Field placeholder photo on the dashboard home (Unsplash, keyless).
+      { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
 };

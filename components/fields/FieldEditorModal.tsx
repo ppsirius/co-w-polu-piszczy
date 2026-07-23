@@ -75,6 +75,7 @@ function FieldForm({
   const deleteField = useFieldsStore((s) => s.deleteField);
 
   const [name, setName] = useState(field?.name ?? "");
+  const [description, setDescription] = useState(field?.description ?? "");
   const [crop, setCrop] = useState<CropType>(field?.crop.crop ?? "pszenica_ozima");
   const [sowingDate, setSowingDate] = useState(field?.crop.sowingDate ?? "");
   const [harvestDate, setHarvestDate] = useState(
@@ -103,6 +104,7 @@ function FieldForm({
       addField({
         id: `f-local-${Date.now()}`,
         name: trimmed,
+        description: description.trim() || undefined,
         crop: {
           crop,
           sowingDate: sowingDate || todayIso(),
@@ -117,6 +119,7 @@ function FieldForm({
     } else if (field) {
       updateField(field.id, {
         name: trimmed,
+        description: description.trim() || undefined,
         status,
         crop: {
           crop,
@@ -174,6 +177,24 @@ function FieldForm({
             placeholder="np. Łąki Rawickie"
             onChange={(e) => setName(e.target.value)}
           />
+          {/* Description is shown as a caption under the field photo on the
+              dashboard card. Optional; textarea matches the input styling. */}
+          <div className="flex flex-col gap-1">
+            <label
+              htmlFor="field-description"
+              className="text-xs font-medium tracking-wide text-ink-muted"
+            >
+              Opis
+            </label>
+            <textarea
+              id="field-description"
+              value={description}
+              placeholder="Krótka notatka widoczna na karcie pola"
+              rows={3}
+              onChange={(e) => setDescription(e.target.value)}
+              className="resize-y rounded-md border border-border bg-surface-1 px-3 py-2 text-sm text-ink placeholder:text-ink-subtle focus:border-primary"
+            />
+          </div>
           <SelectInput
             label="Uprawa"
             value={crop}

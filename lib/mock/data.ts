@@ -91,6 +91,8 @@ export const fields: Field[] = [
     },
     centroid: [16.8675, 51.605],
     status: "normal",
+    description:
+      "Zdrowe łan pszenicy ozimej w fazie kłoszenia. Wilgotność gleby stabilna, brak objawów chorobowych.",
   },
   {
     id: "f-konarzewo",
@@ -116,6 +118,8 @@ export const fields: Field[] = [
     },
     centroid: [16.923, 51.5985],
     status: "warning",
+    description:
+      "Rzepak wchodzi w dojrzewanie. Zaobserwowano miejscowe wysychanie łuszczyn, zbliża się termin zbioru.",
   },
   {
     id: "f-dabrowa",
@@ -141,6 +145,8 @@ export const fields: Field[] = [
     },
     centroid: [16.857, 51.5885],
     status: "urgent",
+    description:
+      "Kukurydza we wczesnej fazie rozwoju, niska biomasa. Wymaga pilnej interwencji i kontroli zachwaszczenia.",
   },
 ];
 
