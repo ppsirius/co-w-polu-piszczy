@@ -23,6 +23,7 @@ export function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const layer = useUIStore((s) => s.layer);
+  const selectedFieldId = useUIStore((s) => s.selectedFieldId);
   const fields = useFields();
 
   // Initialize the map once.
@@ -89,6 +90,18 @@ export function MapView() {
           "line-width": 1.5,
         },
       });
+      // Selected-field highlight (teal, drawn above the base outline so the
+      // choice made on the dashboard is visible after the card click nav).
+      map.addLayer({
+        id: "fields-selected",
+        type: "line",
+        source: "fields",
+        filter: ["==", ["get", "fieldId"], selectedFieldId ?? ""],
+        paint: {
+          "line-color": "#0A9E8F",
+          "line-width": 3,
+        },
+      });
 
       // --- Sensor markers ---
       for (const feature of sensorFeatures().features) {
@@ -147,6 +160,35 @@ export function MapView() {
     if (map.loaded()) update();
     else map.once("load", update);
   }, [layer, fields]);
+
+  // Highlight the selected field and fly to it when the dashboard card click
+  // (or any other selection) changes selectedFieldId.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const update = () => {
+      map.setFilter("fields-selected", [
+        "==",
+        ["get", "fieldId"],
+        selectedFieldId ?? "",
+      ]);
+      const target = fields.find((f) => f.id === selectedFieldId);
+      if (target) {
+        const ring = target.polygon.coordinates[0];
+        const lngs = ring.map((c) => c[0]);
+        const lats = ring.map((c) => c[1]);
+        map.fitBounds(
+          [
+            [Math.min(...lngs), Math.min(...lats)],
+            [Math.max(...lngs), Math.max(...lats)],
+          ],
+          { padding: 60, duration: 600 },
+        );
+      }
+    };
+    if (map.loaded()) update();
+    else map.once("load", update);
+  }, [selectedFieldId, fields]);
 
   if (!hasMapboxToken()) {
     return <MissingTokenNotice />;

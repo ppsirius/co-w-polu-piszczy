@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
@@ -23,6 +23,7 @@ import { cropLabel } from "@/lib/labels";
 export function FieldCard({ field }: { field: Field }) {
   const selectedDate = useUIStore((s) => s.selectedDate);
   const setSelectedField = useUIStore((s) => s.setSelectedField);
+  const router = useRouter();
   const [metrics, setMetrics] = useState<FieldMetrics | null | undefined>(
     undefined,
   );
@@ -39,12 +40,24 @@ export function FieldCard({ field }: { field: Field }) {
 
   const loading = metrics === undefined;
 
+  function openOnMap() {
+    setSelectedField(field.id);
+    router.push(`/map?field=${field.id}`);
+  }
+
   return (
     <Card
       interactive
       as="article"
-      onClick={() => setSelectedField(field.id)}
-      className="flex flex-col gap-4 p-5"
+      onClick={openOnMap}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openOnMap();
+        }
+      }}
+      tabIndex={0}
+      className="flex flex-col gap-4 p-5 outline-none"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">
@@ -94,17 +107,10 @@ export function FieldCard({ field }: { field: Field }) {
         <p className="text-sm text-ink-muted">Brak danych dla wybranej daty.</p>
       )}
 
-      <div className="flex items-center justify-between border-t border-border pt-3">
-        <span className="font-mono text-xs text-ink-subtle">
-          stan na {formatDate(selectedDate)}
+      <div className="border-t border-border pt-3">
+        <span className="font-mono text-[11px] text-ink-subtle">
+          Ostatni odczyt: {formatDate(selectedDate)}
         </span>
-        <Link
-          href={`/map?field=${field.id}`}
-          className="text-xs font-medium text-primary hover:text-primary-hover"
-          onClick={(e) => e.stopPropagation()}
-        >
-          Zobacz na mapie →
-        </Link>
       </div>
     </Card>
   );
@@ -125,5 +131,9 @@ function CardSkeleton() {
 
 function formatDate(iso: IsoDate): string {
   const d = new Date(iso);
-  return d.toLocaleDateString("pl-PL", { day: "2-digit", month: "short" });
+  return d.toLocaleDateString("pl-PL", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 }

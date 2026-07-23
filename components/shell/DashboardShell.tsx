@@ -27,7 +27,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar title={titleFor(pathname)} />
-        <main className="flex-1 overflow-y-auto bg-surface-1">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto bg-surface-1">
+          {children}
+        </main>
       </div>
     </div>
   );
