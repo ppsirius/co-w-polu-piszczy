@@ -16,6 +16,18 @@ export interface ISatelliteProvider {
   getNdviSeries(fieldId: string): Promise<NdviSample[]>;
   /** Most recent NDVI at or before `asOf`. */
   getNdviAt(fieldId: string, asOf: IsoDate): Promise<NdviSample | undefined>;
+  /**
+   * Render an XYZ tile (z/x/y) of NDVI imagery for the map raster overlay.
+   * Returns a PNG/JPEG ArrayBuffer, or `null` if the provider has no raster
+   * capability (the mock returns null so the map falls back to polygon fills).
+   * `date` is the acquisition date to render.
+   */
+  getNdviTile(
+    z: number,
+    x: number,
+    y: number,
+    date: IsoDate,
+  ): Promise<ArrayBuffer | null>;
 }
 
 export interface IWeatherProvider {

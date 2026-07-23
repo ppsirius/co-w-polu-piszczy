@@ -36,6 +36,7 @@ export const channelLabel: Record<ImageChannel, string> = {
 };
 
 export const layerLabel: Record<MapLayer, string> = {
+  none: "Mapa",
   ndvi: "NDVI",
   temperature: "Temperatura",
   gdd: "GDD",

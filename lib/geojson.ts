@@ -1,17 +1,23 @@
-import {
-  getSensorsForField,
-  ndviSamples,
-  sensorReadings,
-  sensors,
-  weatherDays,
-} from "@/lib/mock/data";
-import { fields as seedFields } from "@/lib/mock/data";
-import type { Field, IsoDate, MapLayer } from "@/lib/types";
+import { sensors } from "@/lib/mock/data";
+import type { Field, MapLayer } from "@/lib/types";
 
 /**
  * Build GeoJSON for the map. Fields -> polygons, sensors -> points.
- * The active layer determines each field's fill color (NDVI scale by default).
+ *
+ * The active layer determines each field's fill color. Layer VALUES are not
+ * fetched here: `fieldFeatures` is a pure geometry + color function that takes
+ * a pre-built values map (`{ [fieldId]: number | null }`) from the BFF. This
+ * keeps the provider/data source (mock today, Open-Meteo / Sentinel-2 tomorrow)
+ * on the server side; the client only renders what it's handed.
  */
+
+/**
+ * Neutral fill for the plain "Mapa" layer (no data overlay). A light teal tint
+ * (project primary, low saturation) so fields read clearly against the satellite
+ * basemap without implying any data-driven coloring. The fill-opacity in MapView
+ * keeps it subtle.
+ */
+export const NEUTRAL_FIELD_FILL = "#0A9E8F";
 
 type FieldFeature = GeoJSON.Feature<
   GeoJSON.Polygon,
@@ -37,15 +43,52 @@ type SensorFeature = GeoJSON.Feature<
   }
 >;
 
+/**
+ * Per-field values keyed by field id, for the currently active layer. Built
+ * server-side by `getMapLayerValues` (lib/map-values.ts) and fetched via
+ * `/api/map/layers`. `null` = no data for that field/layer/date (rendered in
+ * the no-data tint).
+ */
+export type LayerValues = Record<string, number | null>;
+
+/**
+ * Full BFF response: field id -> (layer -> value), one entry per field with all
+ * five layers. Kept here (pure types only) so the client can type the fetch
+ * WITHOUT importing the server-only map-values.ts module.
+ */
+export type MapLayerValuesResponse = Record<
+  string,
+  Record<MapLayer, number | null>
+>;
+
+/**
+ * Project the full response down to a single layer's values
+ * (`{ [fieldId]: value }`), the shape fieldFeatures() expects. Pure, so the map
+ * can call it on every layer toggle from the cached payload without refetching.
+ */
+export function pickLayerValues(
+  all: MapLayerValuesResponse,
+  layer: MapLayer,
+): LayerValues {
+  const out: LayerValues = {};
+  for (const [fieldId, lv] of Object.entries(all)) {
+    out[fieldId] = lv[layer] ?? null;
+  }
+  return out;
+}
+
 export function fieldFeatures(
   layer: MapLayer,
-  fields: Field[] = seedFields,
-  date: IsoDate,
+  fields: Field[],
+  values: LayerValues,
 ): GeoJSON.FeatureCollection<GeoJSON.Polygon> {
   return {
     type: "FeatureCollection",
     features: fields.map((field) => {
-      const value = layerValueFor(field.id, layer, date);
+      const value = values[field.id] ?? null;
+      // "none" (plain basemap) uses a neutral fill so fields are visible without
+      // implying a data layer; every other layer colors by its value ramp.
+      const color = layer === "none" ? NEUTRAL_FIELD_FILL : layerColor(layer, value);
       return {
         type: "Feature" as const,
         geometry: field.polygon,
@@ -55,7 +98,7 @@ export function fieldFeatures(
           crop: field.crop.crop,
           status: field.status,
           layerValue: value,
-          color: layerColor(layer, value),
+          color,
         },
       } satisfies FieldFeature;
     }),
@@ -78,39 +121,6 @@ export function sensorFeatures(): GeoJSON.FeatureCollection<GeoJSON.Point> {
       },
     })) satisfies SensorFeature[],
   };
-}
-
-/** Most recent row on or before `date` (mock zonal stat at a point in time). */
-function asOf<T extends { date: string }>(rows: T[], date: string): T | undefined {
-  return rows
-    .filter((r) => r.date <= date)
-    .sort((a, b) => b.date.localeCompare(a.date))[0];
-}
-
-function layerValueFor(
-  fieldId: string,
-  layer: MapLayer,
-  date: IsoDate,
-): number | null {
-  if (layer === "ndvi") {
-    return (
-      asOf(ndviSamples.filter((s) => s.fieldId === fieldId), date)?.value ?? null
-    );
-  }
-  if (layer === "moisture") {
-    const ground = getSensorsForField(fieldId).find((s) => s.kind === "glebowy");
-    if (!ground) return null;
-    return (
-      asOf(sensorReadings.filter((r) => r.sensorId === ground.id), date)
-        ?.soilMoisturePct ?? null
-    );
-  }
-  const wx = asOf(weatherDays.filter((w) => w.fieldId === fieldId), date);
-  if (!wx) return null;
-  if (layer === "temperature") return wx.tempAvgC;
-  if (layer === "gdd") return wx.gddCumulative;
-  if (layer === "dew") return wx.dewHours;
-  return null;
 }
 
 /**
@@ -138,6 +148,8 @@ export function ndviColor(value: number | null): string {
 export function layerColor(layer: MapLayer, value: number | null): string {
   if (value === null) return "#9CA3AF";
   switch (layer) {
+    case "none":
+      return "#9CA3AF";
     case "ndvi":
       return ndviColor(value);
     case "temperature":

@@ -5,7 +5,7 @@ import { layerLabel } from "@/lib/labels";
 import type { MapLayer } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 
-const LAYERS: MapLayer[] = ["ndvi", "temperature", "gdd", "moisture", "dew"];
+const LAYERS: MapLayer[] = ["none", "ndvi", "temperature", "gdd", "moisture", "dew"];
 
 /**
  * Quick layer filters (brief §2.B). Pill grid: available = teal-light,

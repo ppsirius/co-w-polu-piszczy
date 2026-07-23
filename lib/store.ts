@@ -29,7 +29,7 @@ type UIState = {
 export const useUIStore = create<UIState>((set) => ({
   selectedFieldId: null,
   selectedDate: TODAY,
-  layer: "ndvi",
+  layer: "none",
   selectedSensorId: null,
 
   setSelectedField: (id) => set({ selectedFieldId: id }),

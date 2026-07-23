@@ -37,8 +37,9 @@ export type CropRotation = {
   baseTempC: number;
 };
 
-/** Layer a field can be colored by on the map. */
+/** Layer a field can be colored by on the map. "none" = plain basemap, no overlay. */
 export type MapLayer =
+  | "none"
   | "ndvi"
   | "temperature"
   | "gdd"

@@ -2,6 +2,7 @@ import { MapView } from "@/components/map/MapView";
 import { DevicePanel } from "@/components/map/DevicePanel";
 import { DateSelector } from "@/components/map/DateSelector";
 import { LayerFilter } from "@/components/map/LayerFilter";
+import { LayerLegend } from "@/components/map/LayerLegend";
 
 export default function MapaPage() {
   return (
@@ -17,6 +18,7 @@ export default function MapaPage() {
         <DevicePanel />
         <div className="relative min-w-0 flex-1">
           <MapView />
+          <LayerLegend />
         </div>
       </div>
     </div>

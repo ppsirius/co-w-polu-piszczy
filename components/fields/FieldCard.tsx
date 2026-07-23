@@ -8,7 +8,6 @@ import { StatusPill } from "@/components/ui/StatusPill";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useUIStore } from "@/lib/store";
-import { getFieldMetrics } from "@/lib/metrics";
 import type { Field, FieldMetrics, IsoDate } from "@/lib/types";
 import { cropLabel } from "@/lib/labels";
 
@@ -17,8 +16,9 @@ import { cropLabel } from "@/lib/labels";
  * temperature, GDD, dew hours, NDVI with trend. Clicking selects the field
  * in the global store and opens the field map view.
  *
- * Metrics are loaded client-side (the store's selectedDate drives them);
- * a skeleton matches the final layout while loading.
+ * Metrics are loaded client-side via the BFF (/api/fields/[id]/metrics) so the
+ * provider implementations (incl. Sentinel Hub credentials) stay on the server.
+ * A skeleton matches the final layout while loading.
  */
 export function FieldCard({ field }: { field: Field }) {
   const selectedDate = useUIStore((s) => s.selectedDate);
@@ -30,9 +30,13 @@ export function FieldCard({ field }: { field: Field }) {
 
   useEffect(() => {
     let active = true;
-    getFieldMetrics(field.id, selectedDate).then((m) => {
-      if (active) setMetrics(m);
-    });
+    const params = new URLSearchParams({ date: selectedDate });
+    fetch(`/api/fields/${field.id}/metrics?${params.toString()}`)
+      .then((r) => (r.ok ? (r.json() as Promise<FieldMetrics & { error?: string }>) : null))
+      .then((m) => {
+        if (active && m && !m.error) setMetrics(m);
+      })
+      .catch(() => {});
     return () => {
       active = false;
     };
