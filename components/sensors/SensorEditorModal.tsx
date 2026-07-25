@@ -13,6 +13,8 @@ import {
 import { useSensorsStore } from "@/lib/sensors-store";
 import { useFields } from "@/lib/fields-store";
 import { sensorKindLabel, sensorStatusLabel } from "@/lib/labels";
+import { clamp } from "@/lib/utils/number";
+import { todayIso } from "@/lib/utils/today";
 import type {
   Sensor,
   SensorKind,
@@ -222,13 +224,9 @@ function SensorForm({
 
 type Mode = "create" | "edit";
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 /** Clamp a percentage string to [0,100]; returns 100 on invalid input. */
 function clampPct(raw: string): number {
   const n = Number(raw);
   if (Number.isNaN(n)) return 100;
-  return Math.min(100, Math.max(0, Math.round(n)));
+  return clamp(Math.round(n), 0, 100);
 }

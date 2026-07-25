@@ -19,6 +19,8 @@ import type {
   WeatherDayForecast,
   WeatherHour,
 } from "@/lib/types";
+import { clamp } from "@/lib/utils/number";
+import { addDays } from "@/lib/utils/date";
 
 /** Reference "today" - pinned so the mock dataset is stable across runs. */
 export const TODAY: IsoDate = "2026-06-15";
@@ -41,10 +43,6 @@ export function dateRange(
 
 export function toIsoDate(ms: number): IsoDate {
   return new Date(ms).toISOString().slice(0, 10);
-}
-
-export function addDays(iso: IsoDate, days: number): IsoDate {
-  return toIsoDate(Date.parse(iso) + days * DAY_MS);
 }
 
 /** Deterministic pseudo-random in [0,1) from a string seed. Stable across runs. */
@@ -255,7 +253,7 @@ export const ndviSamples: NdviSample[] = fields.flatMap((field) => {
 export const weatherDays: WeatherDay[] = fields.flatMap((field) => {
   const dates = dateRange(TODAY, 42, 1);
   let gddAccum = field.crop.crop === "pszenica_ozima" ? 1840 : 980;
-  return dates.map((date, i) => {
+  return dates.map((date) => {
     const seed = seeded(`${field.id}-wx-${date}`);
     const tempMaxC = round(20 + seed * 9, 1); // 20-29
     const tempMinC = round(9 + seed * 6, 1); // 9-15
@@ -441,10 +439,6 @@ export const notes: Note[] = [
 ];
 
 // --- Helpers ----------------------------------------------------------------
-
-export function clamp(n: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, n));
-}
 
 export function getField(id: string): Field | undefined {
   return fields.find((f) => f.id === id);

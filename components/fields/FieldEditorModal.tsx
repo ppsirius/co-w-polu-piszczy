@@ -14,6 +14,7 @@ import { FieldDrawMap } from "@/components/fields/FieldDrawMap";
 import { useFieldsStore } from "@/lib/fields-store";
 import { cropLabel, fieldStatusLabel } from "@/lib/labels";
 import { polygonAreaHa, polygonCentroid, uniqueVertexCount } from "@/lib/geometry";
+import { todayIso } from "@/lib/utils/today";
 import type { CropType, Field, FieldPolygon, FieldStatus } from "@/lib/types";
 
 const CROP_OPTIONS = optionsFromRecord(cropLabel);
@@ -246,7 +247,3 @@ function FieldForm({
 }
 
 type Mode = "create" | "edit";
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}

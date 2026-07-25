@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getMapLayerValues } from "@/lib/map-values";
-import type { MapLayerValuesResponse } from "@/lib/geojson";
 import { todayIso } from "@/lib/utils/today";
 
 /**

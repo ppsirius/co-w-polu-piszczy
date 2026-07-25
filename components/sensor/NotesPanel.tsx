@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { sensorProvider } from "@/lib/providers/registry";
+import { todayIso } from "@/lib/utils/today";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -34,7 +35,7 @@ export function NotesPanel({ sensorId }: { sensorId: string }) {
     const note: Note = {
       id: `n-local-${Date.now()}`,
       sensorId,
-      date: new Date().toISOString().slice(0, 10),
+      date: todayIso(),
       author: "Ty",
       text,
     };

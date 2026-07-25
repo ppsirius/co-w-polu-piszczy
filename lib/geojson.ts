@@ -1,4 +1,5 @@
 import { sensors } from "@/lib/mock/data";
+import { clamp } from "@/lib/utils/number";
 import type { Field, IsoDate, MapLayer } from "@/lib/types";
 
 /**
@@ -147,7 +148,7 @@ export function sensorFeatures(): GeoJSON.FeatureCollection<GeoJSON.Point> {
  */
 export function ndviColor(value: number | null): string {
   if (value === null) return "#9CA3AF"; // ink-subtle, no data
-  const v = Math.max(0, Math.min(0.9, value));
+  const v = clamp(value, 0, 0.9);
   // Brown (bare) -> yellow -> green (healthy).
   if (v < 0.2) return "#92400E";
   if (v < 0.4) return "#CA8A04";

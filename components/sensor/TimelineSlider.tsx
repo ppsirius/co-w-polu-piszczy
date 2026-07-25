@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { motion, useMotionValue, useTransform } from "motion/react";
 import type { IsoDate } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
+import { clamp } from "@/lib/utils/number";
 
 /**
  * Timeline slider (brief §2.D) - the diagnostic image scrubber.
@@ -59,7 +60,7 @@ export function TimelineSlider({
 
   function commitFromFraction(fraction: number) {
     if (dates.length === 0) return;
-    const clamped = Math.max(0, Math.min(1, fraction));
+    const clamped = clamp(fraction, 0, 1);
     const idx = Math.round(clamped * lastIndex);
     onSelect(dates[idx] ?? selectedDate);
   }

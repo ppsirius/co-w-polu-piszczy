@@ -7,7 +7,7 @@ import { satelliteProvider } from "@/lib/providers/registry";
 import { sensorProvider } from "@/lib/providers/registry";
 import { weatherProvider } from "@/lib/providers/registry";
 import { getSensorsForField, ndviSamples } from "@/lib/mock/data";
-import type { FieldMetrics, IsoDate, NdviSample, Trend } from "@/lib/types";
+import type { FieldMetrics, IsoDate, Trend } from "@/lib/types";
 
 function deriveTrend(current: number, previous: number | undefined): Trend {
   if (previous === undefined) return "flat";

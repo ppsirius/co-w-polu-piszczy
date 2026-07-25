@@ -14,6 +14,7 @@
  * proxy. The browser never sees the Sentinel Hub URL or token.
  */
 import { getField } from "@/lib/mock/data";
+import { addDays } from "@/lib/utils/date";
 import {
   SENTINEL_API_BASE,
   getSentinelToken,
@@ -262,8 +263,8 @@ function evaluatePixel(sample) {
  * readable above. Sentinel Hub expects {from, to} ISO strings, NOT an array.
  */
 function withDateWindow<T extends object>(body: T, date: IsoDate): T {
-  const start = isoShift(date, -DATE_WINDOW_DAYS);
-  const end = isoShift(date, DATE_WINDOW_DAYS);
+  const start = addDays(date, -DATE_WINDOW_DAYS);
+  const end = addDays(date, DATE_WINDOW_DAYS);
   const out = structuredClone(body) as Record<string, unknown>;
   const input = (out.input ?? {}) as Record<string, unknown>;
   const data = (input.data ?? []) as Record<string, unknown>[];
@@ -278,12 +279,6 @@ function withDateWindow<T extends object>(body: T, date: IsoDate): T {
   return out as T;
 }
 
-function isoShift(iso: IsoDate, days: number): IsoDate {
-  const d = new Date(iso + "T00:00:00Z");
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
 /**
  * Like withDateWindow but with a WIDER search range for the statistics endpoint.
  * Sentinel-2 L2A can lag days-to-weeks before CDSE indexes recent acquisitions,
@@ -293,8 +288,8 @@ function isoShift(iso: IsoDate, days: number): IsoDate {
  */
 const STATS_WINDOW_DAYS = 16;
 function withDateWindowStats<T extends object>(body: T, date: IsoDate): T {
-  const start = isoShift(date, -STATS_WINDOW_DAYS);
-  const end = isoShift(date, STATS_WINDOW_DAYS);
+  const start = addDays(date, -STATS_WINDOW_DAYS);
+  const end = addDays(date, STATS_WINDOW_DAYS);
   const out = structuredClone(body) as Record<string, unknown>;
   const input = (out.input ?? {}) as Record<string, unknown>;
   const data = (input.data ?? []) as Record<string, unknown>[];
