@@ -19,7 +19,7 @@ export type DailyTemp = {
 };
 
 /** Daily GDD increment (single-sine would need more inputs; this is the averaging method). */
-export function dailyGdd({ maxC, minC }: DailyTemp, baseTempC: number): number {
+function dailyGdd({ maxC, minC }: DailyTemp, baseTempC: number): number {
   const avg = (maxC + minC) / 2;
   return Math.max(0, avg - baseTempC);
 }

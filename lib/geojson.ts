@@ -18,7 +18,7 @@ import type { Field, IsoDate, MapLayer } from "@/lib/types";
  * basemap without implying any data-driven coloring. The fill-opacity in MapView
  * keeps it subtle.
  */
-export const NEUTRAL_FIELD_FILL = "#0A9E8F";
+const NEUTRAL_FIELD_FILL = "#0A9E8F";
 
 type FieldFeature = GeoJSON.Feature<
   GeoJSON.Polygon,
@@ -146,7 +146,7 @@ export function sensorFeatures(): GeoJSON.FeatureCollection<GeoJSON.Point> {
  * Color ramp for NDVI (-1..1). Real satellite NDVI uses this scale.
  * Values are clamped to the vegetation range [0, 0.9] for the mock.
  */
-export function ndviColor(value: number | null): string {
+function ndviColor(value: number | null): string {
   if (value === null) return "#9CA3AF"; // ink-subtle, no data
   const v = clamp(value, 0, 0.9);
   // Brown (bare) -> yellow -> green (healthy).

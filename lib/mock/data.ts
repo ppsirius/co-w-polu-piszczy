@@ -41,7 +41,7 @@ export function dateRange(
   return out;
 }
 
-export function toIsoDate(ms: number): IsoDate {
+function toIsoDate(ms: number): IsoDate {
   return new Date(ms).toISOString().slice(0, 10);
 }
 

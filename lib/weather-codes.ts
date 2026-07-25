@@ -16,7 +16,7 @@ import type { FieldStatus, WeatherCode } from "@/lib/types";
  *
  * Pure + client-safe (no provider import) so icons and labels share one source.
  */
-export type WeatherCodeMeta = {
+type WeatherCodeMeta = {
   label: string;
   status: FieldStatus;
 };
@@ -53,11 +53,6 @@ const MAP: Record<number, WeatherCodeMeta> = {
   96: { label: "Burza z gradem", status: "urgent" },
   99: { label: "Burza z gradem (silna)", status: "urgent" },
 };
-
-/** Resolve a WMO code to its Polish label + status, with a safe fallback. */
-export function weatherCodeMeta(code: WeatherCode): WeatherCodeMeta {
-  return MAP[code] ?? UNKNOWN;
-}
 
 /** Polish label for a WMO code. */
 export function weatherCodeLabel(code: WeatherCode): string {
